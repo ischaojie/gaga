@@ -8,13 +8,20 @@
 
 package gaga
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type node struct {
 	path     string  // 路由路径
 	part     string  // 路由中由'/'分隔的部分， 比如路由/hello/:name，那么part就是hello和:name
 	children []*node // 子节点
 	isWild   bool    // 是否精确匹配，true代表当前节点是通配符，模糊匹配
+}
+
+func (n *node) String() string {
+	return fmt.Sprintf("node{pattern=%s, part=%s, isWild=%t}", n.path, n.part, n.isWild)
 }
 
 // matchChild 返回当前part对应的树节点
@@ -28,13 +35,14 @@ func (n *node) matchChild(part string) *node {
 }
 
 // matchChildren 返回当前part之前的所有节点
-func (n *node) matchChildren(part string) (nodes []*node) {
+func (n *node) matchChildren(part string) []*node {
+	nodes := make([]*node, 0)
 	for _, child := range n.children {
 		if child.part == part || child.isWild {
 			nodes = append(nodes, child)
 		}
 	}
-	return
+	return nodes
 }
 
 // insert 用来插入路由节点，将parts挂靠到路由树上面
@@ -60,11 +68,11 @@ func (n *node) insert(path string, parts []string, tail int) {
 		n.children = append(n.children, child)
 	}
 	// 递归往下
-	child.insert(part, parts, tail+1)
+	child.insert(path, parts, tail+1)
 }
 
 // search 用来查询路由树上是否存在该路由
-func (n *node) search(parts []string, tail int) (res *node) {
+func (n *node) search(parts []string, tail int) *node {
 
 	// 当找到路由末尾或者遇到通配符*，返回当前node
 	if len(parts) == tail || strings.HasPrefix(n.part, "*") {
@@ -80,7 +88,7 @@ func (n *node) search(parts []string, tail int) (res *node) {
 	for _, child := range children {
 		res := child.search(parts, tail+1)
 		if res != nil {
-			return
+			return res
 		}
 	}
 

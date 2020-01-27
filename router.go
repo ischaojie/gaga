@@ -50,7 +50,7 @@ func (r *router) addRoute(method string, path string, handler HandlerFunc) {
 
 // getRoute 获取路由树节点以及路由变量
 func (r *router) getRoute(method, path string) (node *node, params map[string]string) {
-
+	params = map[string]string{}
 	searchParts := parsePath(path)
 
 	root, ok := r.root[method]
@@ -70,7 +70,7 @@ func (r *router) getRoute(method, path string) (node *node, params map[string]st
 			if part[0] == ':' {
 				params[part[1:]] = searchParts[i]
 			}
-			if part[0] == '*' {
+			if part[0] == '*' && len(part) > 1 {
 				params[part[1:]] = strings.Join(searchParts[i:], "/")
 				break
 			}
