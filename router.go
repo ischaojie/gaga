@@ -32,6 +32,7 @@ func parsePath(path string) (parts []string) {
 }
 
 // addRoute 绑定路由到handler
+// g.Get() 会调用addRoute方法将path添加到路由树上面
 func (r *router) addRoute(method string, path string, handler HandlerFunc) {
 	parts := parsePath(path)
 
@@ -49,6 +50,7 @@ func (r *router) addRoute(method string, path string, handler HandlerFunc) {
 }
 
 // getRoute 获取路由树节点以及路由变量
+// method用来判断属于哪一个方法路由树，path用来获取路由树节点和参数
 func (r *router) getRoute(method, path string) (node *node, params map[string]string) {
 	params = map[string]string{}
 	searchParts := parsePath(path)
@@ -88,10 +90,15 @@ func (r *router) Handle(c *Context) {
 	if node != nil {
 		c.Params = params
 		key := c.Method + "-" + node.path
-		// 将路由绑定到对应的处理函数
-		r.route[key](c)
+		// 将路由对应的handler添加到c.handler
+		// c.handler会根据顺序调用中间件handler和路由handler
+		c.handlers = append(c.handlers, r.route[key])
 	} else {
-		// 	error
-		c.String(http.StatusNotFound, "404 NOT FOUND %s \n", c.Path)
+		c.handlers = append(c.handlers, func(c *Context) {
+			// 	error
+			c.String(http.StatusNotFound, "404 NOT FOUND %s \n", c.Path)
+		})
+
 	}
+	c.Next()
 }

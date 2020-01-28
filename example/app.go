@@ -8,10 +8,26 @@ import (
 
 func main() {
 	g := gaga.New()
-	g.Get("/", Home)
-	g.Get("/hello/:name", Hello)
 
-	_ = g.Run(":8000")
+	// use middleware
+	g.Use(gaga.Logger())
+	g.Use(gaga.Recovery())
+
+	// router group
+	v1 := g.Group("/v1")
+	{
+		v1.Get("/", Home)
+		v1.Get("/hello/:name", Hello)
+	}
+
+	// 错误恢复
+	// 访问会报错，但不会导致服务崩溃，后台会打印错误信息
+	// 前端会显示500错误
+	g.Get("/panic", func(c *gaga.Context) {
+		c.String(http.StatusOK, []string{"shiniao"}[88])
+	})
+
+	_ = g.Run()
 }
 
 func Home(c *gaga.Context) {
