@@ -9,12 +9,16 @@ import (
 type H map[string]interface{}
 
 type Context struct {
-	W          http.ResponseWriter
-	R          *http.Request
+	W http.ResponseWriter
+	R *http.Request
+
 	Method     string
 	Path       string
 	Params     map[string]string
 	StatusCode int
+
+	handlers []HandlerFunc
+	index    int // 记录中间件位置
 }
 
 func newContext(w http.ResponseWriter, r *http.Request) *Context {
@@ -23,6 +27,15 @@ func newContext(w http.ResponseWriter, r *http.Request) *Context {
 		R:      r,
 		Method: r.Method,
 		Path:   r.URL.Path,
+		index:  -1,
+	}
+}
+
+func (c *Context) Next() {
+	c.index++
+	s := len(c.handlers)
+	for ; c.index < s; c.index++ {
+		c.handlers[c.index](c)
 	}
 }
 
@@ -74,4 +87,9 @@ func (c *Context) Html(statusCode int, html string) {
 	c.StatusCode = statusCode
 	c.SetHeader("Content-Type", "text/html")
 	_, _ = c.W.Write([]byte(html))
+}
+
+func (c *Context) Fail(statusCode int, err string) {
+	c.index = len(c.handlers)
+	c.JSON(statusCode, H{"message": err})
 }

@@ -32,24 +32,28 @@ func Home(w http.ResponseWriter, r *http.Request) {}
 package gaga
 
 import (
+	"log"
 	"net/http"
+	"strings"
 )
 
 // HandlerFunc 是路由处理函数
 type HandlerFunc func(c *Context)
 
+// 路由分组
 type RouterGroup struct {
-	prefix      string
-	middlewares []HandlerFunc
-	parent      *RouterGroup
-	engine      *Engine
+	prefix     string        // 路由组前缀
+	middleware []HandlerFunc // 中间件
+	parent     *RouterGroup  // 父
+	engine     *Engine       // engine
 }
 
 // Engine
+// Engine本身也是一个路由组，相当于全局路由组
 type Engine struct {
 	*RouterGroup
 	router *router
-	groups []*RouterGroup
+	groups []*RouterGroup // all groups
 }
 
 // New 新建一个引擎
@@ -57,9 +61,20 @@ func New() *Engine {
 	engine := &Engine{router: newRouter()}
 	engine.RouterGroup = &RouterGroup{engine: engine}
 	engine.groups = []*RouterGroup{engine.RouterGroup}
+	log.Printf("hello, I'm gaga.")
 	return engine
 }
 
+// Default 包含默认的中间件实现
+func Default() *Engine {
+	g := New()
+	// 添加日志和错误恢复中间件
+	g.Use(Logger(), Recovery())
+	return g
+}
+
+// Group 定义一个新的路由组
+// 所有的group分享同一个engine实例
 func (g *RouterGroup) Group(prefix string) (rg *RouterGroup) {
 	engine := g.engine
 	rg = &RouterGroup{
@@ -70,24 +85,43 @@ func (g *RouterGroup) Group(prefix string) (rg *RouterGroup) {
 	return
 }
 
+// Use 添加中间件到路由组
+func (g *RouterGroup) Use(middleware ...HandlerFunc) {
+	g.middleware = append(g.middleware, middleware...)
+}
+
 // addRoute 绑定路由到handler
 func (g *RouterGroup) addRoute(method string, path string, handler HandlerFunc) {
 	g.engine.router.addRoute(method, g.prefix+path, handler)
 }
-func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	c := newContext(w, r)
-	e.router.Handle(c)
-}
 
-// Run 运行http服务
-func (e *Engine) Run(addr string) error {
-	return http.ListenAndServe(addr, e)
-}
-
+// Get 实现了GET方法路由定义
 func (g *RouterGroup) Get(path string, handler HandlerFunc) {
 	g.engine.router.addRoute("GET", path, handler)
 }
 
+// Post 实现了POST方法路由定义
 func (g *RouterGroup) Post(path string, handler HandlerFunc) {
 	g.engine.router.addRoute("POST", path, handler)
+}
+
+// ServerHTTP 实现了官方Handler接口，用来接管所有request
+// 所以我们可以定义自己的Get/Post方法，添加中间件等
+func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var middlewares []HandlerFunc
+	// 遍历路由组
+	for _, g := range e.groups {
+		// 如果前缀相同，说明中间件作用域该路由组
+		if strings.HasPrefix(r.URL.Path, g.prefix) {
+			middlewares = append(middlewares, g.middleware...)
+		}
+	}
+	c := newContext(w, r)
+	c.handlers = middlewares
+	e.router.Handle(c)
+}
+
+// Run 封装了http包的ListenAndServe
+func (e *Engine) Run(addr string) error {
+	return http.ListenAndServe(addr, e)
 }

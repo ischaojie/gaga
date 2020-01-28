@@ -41,3 +41,12 @@ func TestGetRoute(t *testing.T) {
 	}
 	fmt.Printf("matched path: %s, params['name']: %s\n", n.path, params["name"])
 }
+
+func TestGroup(t *testing.T) {
+	g := New()
+	v1 := g.Group("/v1")
+	v2 := v1.Group("/v2")
+	if v2.prefix != "/v1/v2" {
+		t.Fatal("v2's prefix should be /v1/v2 but get: ", v2.prefix)
+	}
+}
