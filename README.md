@@ -7,7 +7,7 @@ gaga是基于go语言的web框架，实现上参考了gin框架，请不要将�
 > [web框架实现原理分析]()
 
 ## Feature
-- 利用前缀树实现路由匹配
+- 利用前缀树算法实现路由匹配
 - 支持动态路由
 - 支持路由分组
 - 支持JSON，Html格式响应
@@ -22,6 +22,7 @@ go get -U github.com/shiniao/gaga
 
 gaga的使用方法和gin很相似，**example** 文件夹有详细的例子。
 
+一个最简单的例子：
 ```go
 package main
 import (
@@ -36,13 +37,35 @@ func main() {
     
     g.Get("/", func(c *gaga.Context) {
         c.Html(http.StatusOK, "<h1>hello, gaga !</h2>")
-        // c.JSON()
-        // c.String()
+        // 还可以使用 c.JSON() 和 c.String()
     })
     
     g.Run(":6000")
 }
  
+```
+
+当然，gaga也支持路由分组：
+```go
+package main
+import (
+    "github.com/shiniao/gaga"
+    "net/http"
+)
+
+func main() {
+	g := gaga.Default()
+    v1 := g.Group("/v1")    
+    {
+        v1.Get("/", func(c *gaga.Context) {
+            c.Html(http.StatusOK, "<h1>hello, gaga !</h2>")
+        })
+        v1.Get("/profile", func(c *gaga.Context){})
+    }
+
+    g.Run(":6000")
+}
+
 ```
 
 ## Wheels
