@@ -26,20 +26,31 @@ func TestParsePath(t *testing.T) {
 
 func TestGetRoute(t *testing.T) {
 	r := newTestRouter()
-	n, params := r.getRoute("GET", "/hello/shiniao")
+	n, params := r.getRoute("GET", "/static/css/base.css")
+	n2, params2 := r.getRoute("GET", "/hello/gaga")
 
 	if n == nil {
 		t.Fatal("nil shouldn't be returned")
 	}
-	fmt.Println(n.part)
+	if n.path != "/static/*filepath" {
+		t.Fatal("expected: /static/*filepath, but: ", n.path)
+	}
 
-	if n.path != "/hello/:name" {
-		t.Fatal("should match /hello/:name")
+	if n2.path != "/hello/:name" {
+		t.Fatal("expected: /hello/:name, but: ", n2.path)
 	}
-	if params["name"] != "shiniao" {
-		t.Fatal("name should equal shiniao")
+
+	if params["filepath"] != "css/base.css" {
+		t.Fatal("expected: css/base.css, but: ", params["filepath"])
 	}
-	fmt.Printf("matched path: %s, params['name']: %s\n", n.path, params["name"])
+
+	if params2["name"] != "gaga" {
+		t.Fatal("expected gaga, but: ", params2["name"])
+	}
+
+	fmt.Printf("matched path: %s, params['filepath']: %s\n", n.path, params["filepath"])
+	fmt.Printf("matched path: %s, params['name']: %s\n", n2.path, params2["name"])
+
 }
 
 func TestGroup(t *testing.T) {

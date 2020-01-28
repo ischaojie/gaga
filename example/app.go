@@ -27,7 +27,7 @@ func main() {
 		c.String(http.StatusOK, []string{"shiniao"}[88])
 	})
 
-	_ = g.Run()
+	_ = g.Run("8000")
 }
 
 func Home(c *gaga.Context) {

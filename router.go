@@ -1,9 +1,18 @@
 package gaga
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 )
+
+type node struct {
+	path     string           // 路由路径
+	part     string           // 路由中由'/'分隔的部分， 比如路由/hello/:name，那么part就是hello和:name
+	children map[string]*node // 子节点
+	isWild   bool             // 是否精确匹配，true代表当前节点是通配符，模糊匹配
+	isPath   bool             // 是否是路由结尾
+}
 
 type router struct {
 	root  map[string]*node       // 路由树根节点，每个http方法都是一个路由树
@@ -12,6 +21,10 @@ type router struct {
 
 func newRouter() *router {
 	return &router{root: make(map[string]*node), route: make(map[string]HandlerFunc)}
+}
+
+func (n *node) String() string {
+	return fmt.Sprintf("node{path=%s, part=%s, isWild=%t, isPath=%t}", n.path, n.part, n.isWild, n.isPath)
 }
 
 // parsePath 分隔路由为part字典
@@ -33,18 +46,25 @@ func parsePath(path string) (parts []string) {
 
 // addRoute 绑定路由到handler
 // g.Get() 会调用addRoute方法将path添加到路由树上面
-func (r *router) addRoute(method string, path string, handler HandlerFunc) {
+func (r *router) addRoute(method, path string, handler HandlerFunc) {
 	parts := parsePath(path)
-
-	// 查找是否存在当前http方法的路由树
-	// 不存在的话新建一个
 	if _, ok := r.root[method]; !ok {
-		r.root[method] = &node{}
-
+		r.root[method] = &node{children: make(map[string]*node)}
 	}
+	root := r.root[method]
 	key := method + "-" + path
 	// 将parts插入到路由树
-	r.root[method].insert(path, parts, 0)
+	for _, part := range parts {
+		if root.children[part] == nil {
+			root.children[part] = &node{
+				part:     part,
+				children: make(map[string]*node),
+				isWild:   part[0] == ':' || part[0] == '*'}
+		}
+		root = root.children[part]
+	}
+	root.isPath = true
+	root.path = path
 	// 绑定路由和handler
 	r.route[key] = handler
 }
@@ -55,31 +75,39 @@ func (r *router) getRoute(method, path string) (node *node, params map[string]st
 	params = map[string]string{}
 	searchParts := parsePath(path)
 
-	root, ok := r.root[method]
-	// 找不到该method对应的路由树
-	if !ok {
+	// get method trie
+	var ok bool
+	if node, ok = r.root[method]; !ok {
 		return nil, nil
 	}
 
 	// 在路由树上查找该路径
-	node = root.search(searchParts, 0)
-	if node != nil {
-		// 处理part中的通配符
-		parts := parsePath(node.path)
-		// 添加动态路由中的参数
-		for i, part := range parts {
-			// 如果part是路由参数
-			if part[0] == ':' {
-				params[part[1:]] = searchParts[i]
+	for i, part := range searchParts {
+		var temp string
+		// 查找child是否等于part
+		for _, child := range node.children {
+			if child.part == part || child.isWild {
+				// 添加参数
+				if child.part[0] == '*' {
+					params[child.part[1:]] = strings.Join(searchParts[i:], "/")
+				}
+				if child.part[0] == ':' {
+					params[child.part[1:]] = part
+				}
+				temp = child.part
 			}
-			if part[0] == '*' && len(part) > 1 {
-				params[part[1:]] = strings.Join(searchParts[i:], "/")
-				break
-			}
+
 		}
-		return
+		// 遇到通配符*，直接返回
+		if temp[0] == '*' {
+			return node.children[temp], params
+		}
+		node = node.children[temp]
+
 	}
-	return nil, nil
+
+	return
+
 }
 
 // handle 用来绑定路由和handlerFunc

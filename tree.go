@@ -1,24 +1,20 @@
+package gaga
 /*
 一个路由前缀树看起来像这样：
 				      /
 			/hello	/static       /home
          /:name    /*filepath
        /profile
-*/
 
-package gaga
+
+
 
 import (
 	"fmt"
 	"strings"
 )
+/*
 
-type node struct {
-	path     string  // 路由路径
-	part     string  // 路由中由'/'分隔的部分， 比如路由/hello/:name，那么part就是hello和:name
-	children []*node // 子节点
-	isWild   bool    // 是否精确匹配，true代表当前节点是通配符，模糊匹配
-}
 
 func (n *node) String() string {
 	return fmt.Sprintf("node{pattern=%s, part=%s, isWild=%t}", n.path, n.part, n.isWild)
@@ -71,6 +67,7 @@ func (n *node) insert(path string, parts []string, tail int) {
 	child.insert(path, parts, tail+1)
 }
 
+
 // search 用来查询路由树上是否存在该路由
 func (n *node) search(parts []string, tail int) *node {
 
@@ -94,3 +91,4 @@ func (n *node) search(parts []string, tail int) *node {
 
 	return nil
 }
+*/
