@@ -15,6 +15,11 @@ gaga是基于go语言的web框架，实现上参考了gin框架，请不要将�
 - 错误恢复
 
 ## How to use
+
+```text
+go get -U github.com/shiniao/gaga
+```
+
 gaga的使用方法和gin很相似，**example** 文件夹有详细的例子。
 
 ```go
@@ -47,3 +52,7 @@ func main() {
 - [nan](https://github.com/shiniao/nan): 一个语言解释器实现
 - [mid](https://github.com/shiniao/mid)：markdown编译器实现
 - [gaga](https://github.com/shiniao/gaga): web框架实现
+
+## Contact
+
+有任何问题欢迎到微博找我[@潮戒](https://weibo.com/zhuzhezhe)
