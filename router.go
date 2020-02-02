@@ -11,7 +11,6 @@ type node struct {
 	part     string           // 路由中由'/'分隔的部分， 比如路由/hello/:name，那么part就是hello和:name
 	children map[string]*node // 子节点
 	isWild   bool             // 是否精确匹配，true代表当前节点是通配符，模糊匹配
-	isPath   bool             // 是否是路由结尾
 }
 
 type router struct {
@@ -24,7 +23,7 @@ func newRouter() *router {
 }
 
 func (n *node) String() string {
-	return fmt.Sprintf("node{path=%s, part=%s, isWild=%t, isPath=%t}", n.path, n.part, n.isWild, n.isPath)
+	return fmt.Sprintf("node{path=%s, part=%s, isWild=%t}", n.path, n.part, n.isWild)
 }
 
 // parsePath 分隔路由为part字典
@@ -63,7 +62,6 @@ func (r *router) addRoute(method, path string, handler HandlerFunc) {
 		}
 		root = root.children[part]
 	}
-	root.isPath = true
 	root.path = path
 	// 绑定路由和handler
 	r.route[key] = handler
@@ -81,7 +79,7 @@ func (r *router) getRoute(method, path string) (node *node, params map[string]st
 		return nil, nil
 	}
 
-	// 在路由树上查找该路径
+	// 在该方法的路由树上查找该路径
 	for i, part := range searchParts {
 		var temp string
 		// 查找child是否等于part

@@ -1,28 +1,30 @@
 # gaga
-gaga is just another web framework base on go language, it's just for fun, for learn.
+gaga is just another web framework base on go language, the implementation refers to the gin framework.
 
-gaga是基于go语言的web框架，实现上参考了gin框架，请不要将其用于生产上。
-它只是用来学习web框架的原理而造的另一个轮子。
+it's just for fun, for learn.
 
-> [web框架实现原理分析]()
+Please don't use it in production, It's just another wheel built to learn the principles of the web framework.
 
-## Feature
-- 利用前缀树算法实现路由匹配
-- 支持动态路由
-- 支持路由分组
-- 支持JSON，Html格式响应
-- 支持中间件
-- 错误恢复
 
-## How to use
+> [前缀树算法实现路由匹配原理解析](https://blog.shiniao.fun/2020/01/28/前缀树算法实现路由匹配原理解析/)
+
+## 特点
+- The prefix tree algorithm is used to realize route matching
+- Support dynamic routing
+- Support routing group
+- Support JSON & Html & string formatted response
+- Support middleware
+- Support error recovery
+
+## 如何使用
 
 ```text
 go get -U github.com/shiniao/gaga
 ```
 
-gaga的使用方法和gin很相似，**example** 文件夹有详细的例子。
+The **example** package have more examples。
 
-一个最简单的例子：
+a simple example：
 ```go
 package main
 import (
@@ -33,9 +35,9 @@ import (
 func main() {
 	g := gaga.New()
     // 或者使用gaga.Default()
-    // Default默认添加了内置的logger和recover中间件
+    // Default默认添加了内置的logger和recover中间件 
     
-    g.Get("/", func(c *gaga.Context) {
+g.Get("/", func(c *gaga.Context) {
         c.Html(http.StatusOK, "<h1>hello, gaga !</h2>")
         // 还可以使用 c.JSON() 和 c.String()
     })
@@ -45,7 +47,7 @@ func main() {
  
 ```
 
-当然，gaga也支持路由分组：
+Of course，gaga also support routing's group：
 ```go
 package main
 import (

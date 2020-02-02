@@ -10,6 +10,7 @@ func newTestRouter() *router {
 	r := newRouter()
 	r.addRoute("GET", "/", nil)
 	r.addRoute("GET", "/hello/:name", nil)
+	r.addRoute("GET", "/hello/:name/profile", nil)
 	r.addRoute("GET", "/hello/a/b", nil)
 	r.addRoute("GET", "/hi/:name", nil)
 	r.addRoute("GET", "/static/*filepath", nil)
@@ -28,6 +29,7 @@ func TestGetRoute(t *testing.T) {
 	r := newTestRouter()
 	n, params := r.getRoute("GET", "/static/css/base.css")
 	n2, params2 := r.getRoute("GET", "/hello/gaga")
+	n3, params3 := r.getRoute("GET", "/hello/gaga/profile")
 
 	if n == nil {
 		t.Fatal("nil shouldn't be returned")
@@ -40,6 +42,10 @@ func TestGetRoute(t *testing.T) {
 		t.Fatal("expected: /hello/:name, but: ", n2.path)
 	}
 
+	if n3.path != "/hello/:name/profile" {
+		t.Fatal("expected: /hello/:name/profile, but: ", n3.path)
+	}
+
 	if params["filepath"] != "css/base.css" {
 		t.Fatal("expected: css/base.css, but: ", params["filepath"])
 	}
@@ -47,9 +53,13 @@ func TestGetRoute(t *testing.T) {
 	if params2["name"] != "gaga" {
 		t.Fatal("expected gaga, but: ", params2["name"])
 	}
+	if params3["name"] != "gaga" {
+		t.Fatal("expected gaga, but: ", params2["name"])
+	}
 
 	fmt.Printf("matched path: %s, params['filepath']: %s\n", n.path, params["filepath"])
 	fmt.Printf("matched path: %s, params['name']: %s\n", n2.path, params2["name"])
+	fmt.Printf("matched path: %s, params['name']: %s\n", n3.path, params3["name"])
 
 }
 
